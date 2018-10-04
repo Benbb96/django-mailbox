@@ -373,7 +373,13 @@ class Mailbox(models.Model):
             # email.message.replace_header may raise 'KeyError' if the header
             # 'content-transfer-encoding' is missing
             logger.warning("Failed to parse message: %s", exc,)
-            return None
+            # Check if the problem comes from the missing Content Transfer Encoding header
+            if not 'Content-Transfer-Encoding' in message.keys():
+                logger.info("Add default Content-Transfer-Encoding: 8bit")
+                message.add_header('Content-Transfer-Encoding', '8bit')
+                body = message.as_string()
+            else:
+                return None
         msg.set_body(body)
         if message['in-reply-to']:
             try:
